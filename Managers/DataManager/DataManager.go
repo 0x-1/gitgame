@@ -1,9 +1,11 @@
-package GameManager
+package DataManager
 
 import (
 	"github.com/xanzy/go-gitlab"
 	"strings"
 	"github.com/pkg/errors"
+	"log"
+	"encoding/base64"
 )
 func M_GetProjectByName(git *gitlab.Client ,projectName string)(gitlab.Project, error) {
 	opt := gitlab.ListProjectsOptions{
@@ -41,7 +43,7 @@ func M_GetProjectByName(git *gitlab.Client ,projectName string)(gitlab.Project, 
 }
 
 //viable, can filter userid
-func M_GetProjectIssues(git *gitlab.Client ,projectID int)([]*gitlab.Issue, error) {
+func M_GetProjectIssues(git *gitlab.Client ,projectID int)([]gitlab.Issue, error) {
 
 
 
@@ -52,11 +54,13 @@ func M_GetProjectIssues(git *gitlab.Client ,projectID int)([]*gitlab.Issue, erro
 		},
 	}
 
-	var allIssues []*gitlab.Issue
+	var allIssues []gitlab.Issue
 	for {
 		issues, resp, err := git.Issues.ListProjectIssues(projectID, opt)
 		if(err == nil) {
-			allIssues = append(allIssues, issues...)
+			for _, element := range issues {
+				allIssues = append(allIssues, *element)
+			}
 
 			if opt.Page >= resp.TotalPages {
 				break
@@ -70,18 +74,21 @@ func M_GetProjectIssues(git *gitlab.Client ,projectID int)([]*gitlab.Issue, erro
 	return allIssues, nil
 }
 
-func M_GetProjectContributors(git *gitlab.Client, projectID int)([]*gitlab.Contributor, error) {
+func M_GetProjectContributors(git *gitlab.Client, projectID int)([]gitlab.Contributor, error) {
 
 	opt := &gitlab.ListContributorsOptions{
 		PerPage:10,
 		Page:1,
 	}
 
-	var allContributors []*gitlab.Contributor
+	var allContributors []gitlab.Contributor
 	for {
 		contributors, resp, err := git.Repositories.Contributors(projectID, opt)
 		if(err == nil) {
-			allContributors = append(allContributors, contributors...)
+			for _, element := range contributors {
+				allContributors = append(allContributors, *element)
+			}
+
 
 			if opt.Page >= resp.TotalPages {
 				break
@@ -95,7 +102,7 @@ func M_GetProjectContributors(git *gitlab.Client, projectID int)([]*gitlab.Contr
 	return allContributors, nil
 }
 
-func M_GetProjectCommits(git *gitlab.Client, projectID int)([]*gitlab.Commit, error) {
+func M_GetProjectCommits(git *gitlab.Client, projectID int)([]gitlab.Commit, error) {
 
 	opt := &gitlab.ListCommitsOptions{
 		ListOptions: gitlab.ListOptions{
@@ -104,11 +111,13 @@ func M_GetProjectCommits(git *gitlab.Client, projectID int)([]*gitlab.Commit, er
 		},
 	}
 
-	var allCommits []*gitlab.Commit
+	var allCommits []gitlab.Commit
 	for {
 		commits, resp, err := git.Commits.ListCommits(projectID, opt)
 		if(err == nil) {
-			allCommits = append(allCommits, commits...)
+			for _, element := range commits {
+				allCommits = append(allCommits, *element)
+			}
 
 			if opt.Page >= resp.TotalPages {
 				break
@@ -123,7 +132,7 @@ func M_GetProjectCommits(git *gitlab.Client, projectID int)([]*gitlab.Commit, er
 }
 
 //not usefull, only one user possible
-func M_GetProjectEvents(git *gitlab.Client, projectID int)([]*gitlab.ContributionEvent, error) {
+func M_GetProjectEvents(git *gitlab.Client, projectID int)([]gitlab.ContributionEvent, error) {
 
 	opt := &gitlab.ListContributionEventsOptions{
 		ListOptions: gitlab.ListOptions{
@@ -132,13 +141,15 @@ func M_GetProjectEvents(git *gitlab.Client, projectID int)([]*gitlab.Contributio
 		},
 	}
 
-	var allEvents []*gitlab.ContributionEvent
+	var allEvents []gitlab.ContributionEvent
 	for {
 		events, resp, err := git.Events.ListProjectVisibleEvents(projectID, opt)
 		if (err == nil) {
 			for _, element := range events {
 				if (element.ProjectID == projectID) {
-					allEvents = append(allEvents, element)
+					for _, element := range events {
+						allEvents = append(allEvents, *element)
+					}
 				}
 			}
 
@@ -153,4 +164,67 @@ func M_GetProjectEvents(git *gitlab.Client, projectID int)([]*gitlab.Contributio
 	}
 
 	return allEvents, nil
+}
+
+func M_GetFile(git *gitlab.Client, projectID int, branch string)(content string, err error) {
+	opt := &gitlab.GetFileOptions{
+		Ref: gitlab.String(branch),
+	}
+
+	file, _, err := git.RepositoryFiles.GetFile(projectID, ".gitattributes", opt)
+	if(err==nil) {
+		bytes, err := base64.StdEncoding.DecodeString(file.Content)
+		if(err==nil) {
+			temp := strings.Split(string(bytes),"\n")
+			for _, element := range temp {
+				log.Println(element)
+			}
+		} else {
+			return "", err
+		}
+		return file.Content, nil
+	} else {
+		return "", err
+	}
+}
+
+func M_CreateEditWikiPage(git *gitlab.Client, projectID int) (error){
+	optEdit := &gitlab.EditWikiPageOptions{
+		Content:gitlab.String("yey 2"),
+		Title:gitlab.String("#gitGame-Result"),
+	}
+
+	optCreate := &gitlab.CreateWikiPageOptions{
+		Title:gitlab.String("#gitGame-Result"),
+		Content:gitlab.String("yey"),
+	}
+
+	//optList := &gitlab.ListWikisOptions{
+	//
+	//}
+	//
+	//wikies, _, err := git.Wikis.ListWikis(projectID, optList)
+	//for _, element := range wikies {
+	//	log.Println(element.Slug)
+	//}
+
+	_, _ ,err := git.Wikis.GetWikiPage(projectID, "#gitGame-Result")
+	if(err == nil) {
+		_, _ ,err := git.Wikis.EditWikiPage(projectID, "#gitGame-Result", optEdit)
+		if(err==nil) {
+			return nil
+		} else {
+			return err
+		}
+	} else {
+		_,_,err := git.Wikis.CreateWikiPage(projectID, optCreate)
+		if(err==nil) {
+			return nil
+		} else {
+			return err
+		}
+	}
+
+
+
 }
