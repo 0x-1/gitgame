@@ -1,4 +1,4 @@
-package DataManager
+package GitLabManager
 
 import (
 	"github.com/xanzy/go-gitlab"
