@@ -1,10 +1,7 @@
 package main
 
 import (
-	"github.com/0x-1/GitGame/Managers/GameManager"
 	"github.com/0x-1/GitGame/Managers/GitLabManager"
-	"github.com/0x-1/GitGame/Managers/InterpreterManager"
-	"github.com/0x-1/GitGame/Models"
 	"github.com/0x-1/GitGame/Services/GitLabService"
 	"github.com/gin-gonic/gin"
 	"github.com/xanzy/go-gitlab"
@@ -17,7 +14,7 @@ import (
 func main() {
 	//data, err := CryptManager.M_Encrypt([]byte("S8WXCdS2yrJwhSZ_C-oH"))
 
-	err, gitData := GameManager.M_GetGame("https://inf-git.fh-rosenheim.de/", "unity", "S8WXCdS2yrJwhSZ_C-oH")
+	/*err, gitData := GameManager.M_GetGame("https://inf-git.fh-rosenheim.de/", "unity", "S8WXCdS2yrJwhSZ_C-oH")
 	if(err != nil) {
 		log.Println(err)
 		return
@@ -41,7 +38,7 @@ func main() {
 		log.Println("yey", res.Players[0].MemberData.Username, res.Players[0].Experience)
 	} else {
 		log.Println(".gitGame config error:",err)
-	}
+	}*/
 
 	//return
 	//switch kingpin.MustParse(app.Parse([]string{"debug","2"})) {

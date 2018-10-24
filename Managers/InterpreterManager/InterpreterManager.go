@@ -66,15 +66,41 @@ func M_Interpret(currentState Models.GitGameState, gitData Models.GitLabData,cmd
 				}
 			case "commit":
 				{
-
+					for _,event := range gitData.Events {
+						if(event.ActionName=="pushed to") {
+							for pindex,player := range currentState.Players {
+								if(event.AuthorID==player.MemberData.ID) {
+									currentState.Players[pindex].Experience += *questaddexp
+								}
+							}
+						}
+					}
 					return currentState, nil
 				}
 			case "milestone":
 				{
+					for _,event := range gitData.Events {
+						if(event.TargetType=="Milestone" && event.ActionName=="opened") {
+							for pindex,player := range currentState.Players {
+								if(event.AuthorID==player.MemberData.ID) {
+									currentState.Players[pindex].Experience += *questaddexp
+								}
+							}
+						}
+					}
 					return currentState, nil
 				}
 			case "pipeline":
 				{
+					for _,event := range gitData.Events {
+						if(event.TargetType=="Issue" && event.ActionName=="opened") {
+							for pindex,player := range currentState.Players {
+								if(event.AuthorID==player.MemberData.ID) {
+									currentState.Players[pindex].Experience += *questaddexp
+								}
+							}
+						}
+					}
 					return currentState, nil
 				}
 			default:

@@ -27,7 +27,7 @@ func m_OnTest(context *gin.Context) {
 
 	var list []gitlab.ContributionEvent
 	for _,element := range gitData.Events {
-		if(element.TargetType=="Issue" && element.ActionName=="opened") {
+		if(element.ActionName=="pushed to") {
 			list = append(list, element)
 		}
 
