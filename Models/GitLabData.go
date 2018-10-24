@@ -2,10 +2,12 @@ package Models
 
 import "github.com/xanzy/go-gitlab"
 
-type ResponseGame struct {
-	Success bool
+type GitLabData struct {
 	Contributors []gitlab.Contributor
-	Project gitlab.Project
+
 	Issues []gitlab.Issue
 	Events []gitlab.ContributionEvent
+
+	Project gitlab.Project
+	Members []gitlab.ProjectMember
 }

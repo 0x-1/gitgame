@@ -1,11 +1,11 @@
 package GitLabManager
 
 import (
-	"github.com/xanzy/go-gitlab"
-	"strings"
-	"github.com/pkg/errors"
-	"log"
 	"encoding/base64"
+	"github.com/pkg/errors"
+	"github.com/xanzy/go-gitlab"
+	"log"
+	"strings"
 )
 func M_GetProjectByName(git *gitlab.Client ,projectName string)(gitlab.Project, error) {
 	opt := gitlab.ListProjectsOptions{
@@ -132,7 +132,7 @@ func M_GetProjectCommits(git *gitlab.Client, projectID int)([]gitlab.Commit, err
 }
 
 //not usefull, only one user possible
-func M_GetProjectEvents(git *gitlab.Client, projectID int)([]gitlab.ContributionEvent, error) {
+func M_GetProjectEvents(git *gitlab.Client, projectID int) ([]gitlab.ContributionEvent, error) {
 
 	opt := &gitlab.ListContributionEventsOptions{
 		ListOptions: gitlab.ListOptions{
@@ -146,13 +146,8 @@ func M_GetProjectEvents(git *gitlab.Client, projectID int)([]gitlab.Contribution
 		events, resp, err := git.Events.ListProjectVisibleEvents(projectID, opt)
 		if (err == nil) {
 			for _, element := range events {
-				if (element.ProjectID == projectID) {
-					for _, element := range events {
-						allEvents = append(allEvents, *element)
-					}
-				}
+				allEvents = append(allEvents, *element)
 			}
-
 			if opt.Page >= resp.TotalPages {
 				break
 			}
@@ -161,9 +156,28 @@ func M_GetProjectEvents(git *gitlab.Client, projectID int)([]gitlab.Contribution
 		} else {
 			return nil, err
 		}
+
+	}
+	return allEvents, nil
+}
+
+func M_GetProjectMembers(git *gitlab.Client, projectID int)([]gitlab.ProjectMember, error) {
+	opt := &gitlab.ListProjectMembersOptions{
+
+	}
+	var allMembers []gitlab.ProjectMember
+	members, _, err := git.ProjectMembers.ListProjectMembers(projectID, opt)
+
+	if(err == nil) {
+		for _, member := range members {
+			allMembers = append(allMembers, *member)
+		}
+		return allMembers, nil
+	} else {
+		return nil, err
 	}
 
-	return allEvents, nil
+
 }
 
 func M_GetFile(git *gitlab.Client, projectID int, branch string)(content string, err error) {
@@ -177,7 +191,7 @@ func M_GetFile(git *gitlab.Client, projectID int, branch string)(content string,
 		if(err==nil) {
 			temp := strings.Split(string(bytes),"\n")
 			for _, element := range temp {
-				log.Println(element)
+				log.Println(element) //todo
 			}
 		} else {
 			return "", err

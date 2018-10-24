@@ -1,37 +1,54 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
-	"net/http"
-	"github.com/0x-1/GitGame/Services/GitService"
+	"github.com/0x-1/GitGame/Managers/GameManager"
 	"github.com/0x-1/GitGame/Managers/GitLabManager"
+	"github.com/0x-1/GitGame/Managers/InterpreterManager"
+	"github.com/0x-1/GitGame/Models"
+	"github.com/0x-1/GitGame/Services/GitLabService"
+	"github.com/gin-gonic/gin"
 	"github.com/xanzy/go-gitlab"
 	"log"
-	"os"
-	"gopkg.in/alecthomas/kingpin.v2"
+	"net/http"
 )
 
 
-var (
-	app = kingpin.New("interpreter", "gitgame config file interpreter")
-	debug = app.Command("debug", "enable debug mode")
-	debugBool = debug.Arg("boolean", "enable or disable bool").Required().Bool()
-)
+
 func main() {
 	//data, err := CryptManager.M_Encrypt([]byte("S8WXCdS2yrJwhSZ_C-oH"))
 
-
-
-
-	return
-	switch kingpin.MustParse(app.Parse([]string{"debug","2"})) {
-	case debug.FullCommand():
-		log.Println(*debugBool)
+	err, gitData := GameManager.M_GetGame("https://inf-git.fh-rosenheim.de/", "unity", "S8WXCdS2yrJwhSZ_C-oH")
+	if(err != nil) {
+		log.Println(err)
+		return
 	}
 
-	//os.Exit(0)
-	return
-	log.SetOutput(os.Stdout)
+	var gameState Models.GitGameState
+	for _, member := range gitData.Members {
+		gameState.Players = append(gameState.Players, Models.Player{MemberData:member, Experience:0})
+	}
+
+
+	//Player Init
+
+	//startState.Players = data.Project.
+
+
+
+
+	res, err := InterpreterManager.M_Interpret(gameState,gitData, "quest add issue 100 open //first quest")
+	if(err == nil) {
+		log.Println("yey", res.Players[0].MemberData.Username, res.Players[0].Experience)
+	} else {
+		log.Println(".gitGame config error:",err)
+	}
+
+	//return
+	//switch kingpin.MustParse(app.Parse([]string{"debug","2"})) {
+	//case debug.FullCommand():
+	//	log.Println(*debugBool)
+	//}
+	//log.SetOutput(os.Stdout)
 	gin.SetMode(gin.DebugMode)
 	engine := gin.Default()
 
@@ -40,10 +57,12 @@ func main() {
 	})
 
 	//Add Services
-	GitService.M_InitGameService(engine)
+	GitLabService.M_InitGameService(engine)
 
 	engine.Run(":54321")
 	//test
+
+
 	git := gitlab.NewClient(nil, "S8WXCdS2yrJwhSZ_C-oH")
 	git.SetBaseURL("https://inf-git.fh-rosenheim.de/")
 	project, err := GitLabManager.M_GetProjectByName(git,"unity")
