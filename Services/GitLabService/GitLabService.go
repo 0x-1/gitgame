@@ -98,29 +98,25 @@ func m_OnUpdateGame(context *gin.Context) {
 		log.Println(err)
 		return
 	}
-	log.Println("is this the token?: ",string(decbytes))
 
-	accessToken, err := CryptManager.M_Decrypt(bytes)
-	if(err != nil) {
-		context.AbortWithStatus(http.StatusBadRequest)
-		log.Println(err)
-		return
-	}
+	accessToken :=  string(decbytes)
 
-	accessToken = accessToken
-	gitLabURL=gitLabURL
+	go func() {
+		gitLabData , err := GitLabManager.M_GetGitLabData(gitLabURL, projectName, accessToken)
+		if(err != nil) {
+			log.Println(err)
+		}
+
+		gitGameState, err := InterpreterManager.M_Interpret(gitLabData)
+		if(err != nil){
+			log.Println(err)
+		}
+
+		err = OutputManager.M_SaveAsWikiPage(gitLabURL, projectName, accessToken, gitGameState, context.Request.Host, gitLabURL)
+		if(err != nil) {
+			log.Println(err)
+		}
+	}()
 
 	context.JSON(http.StatusOK, "yeeeeeey")
-
-	/*err = GameManager.M_TestGame(gitLabURL, projectName, string(accessToken))
-	if(err != nil) {
-		context.AbortWithStatus(http.StatusBadRequest)
-	}*/ //todo
-
-	/*go func() {
-		err , game := GameManager.M_GetGame(gitLabURL, projectName, string(accessToken))
-		if(err == nil) {
-			GameManager.M_SaveGame(game, string(accessToken))
-		}
-	}()*/ //Todo
 }

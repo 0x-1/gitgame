@@ -5,6 +5,8 @@ import "github.com/xanzy/go-gitlab"
 type GitGameState struct {
 	Levels []Level
 	Players []Player
+	Todos []Todo
+
 }
 
 type Player struct {
@@ -14,4 +16,10 @@ type Player struct {
 
 type Level struct {
 	RequiredEXP int
+}
+
+type Todo struct {
+	Description string
+	Experience int
+	Done bool
 }

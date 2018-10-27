@@ -6,6 +6,7 @@ import (
 	"github.com/0x-1/GitGame/Managers/GitLabManager"
 	"github.com/0x-1/GitGame/Models"
 	"github.com/xanzy/go-gitlab"
+	"strconv"
 	"time"
 )
 
@@ -18,17 +19,40 @@ func M_SaveAsWikiPage(gitLabURL string, projectName string, accessToken string, 
 	var content string
 
 
-	content += "#GitGame Result created at: "+time.Now().String()+"<br/>"
+	content += "#GitGame Result created at: "+time.Now().Format(time.RFC1123)+"\n\n"
 
 	cryptedTokenBytes, err := CryptManager.M_Encrypt([]byte(accessToken))
 	cryptedToken := base64.URLEncoding.EncodeToString(cryptedTokenBytes)
 
 
 
-	content += "#Update this file by opening this link once: [link]("+gitGameHost+"/gitgame/update/"+projectName+"/"+cryptedToken+"?url="+gitLabHost+")<br/>"
-	content += "#Players:<br/>"
+	content += "#Update this file by opening this link once: [link]("+gitGameHost+"/gitgame/update/"+projectName+"/"+cryptedToken+"?url="+gitLabHost+")\n\n"
+	content += "Spieler | Level | Fortschritt | Erfahrung\n"
+	content += "--- | --- | --- | ---\n"
+
 	for _,player := range state.Players {
-		content += player.MemberData.Name+"<br/>"
+		level, nextLevelExp, levelPercentComplete := m_GetPlayerLevel(state.Levels, player.Experience)
+		content += player.MemberData.Username+ " | "
+		content += strconv.Itoa(level) + " | "
+		content += m_GenerateProgressBar(levelPercentComplete,20)+" "+strconv.Itoa(levelPercentComplete)+"% | "
+		content += strconv.Itoa(player.Experience)+"/"+strconv.Itoa(nextLevelExp)
+		content += "\n"
+	}
+
+	content += "\n\n"
+	content += "TODO:\n\n"
+	content += "Beschreibung | Erfahrung | Status\n"
+	content += "--- | --- | ---\n"
+
+	for _, todo := range state.Todos {
+		var status string
+		if(todo.Done) {
+			status = "Erledigt"
+		} else {
+			status = "Offen"
+		}
+		content += todo.Description + " | " + strconv.Itoa(todo.Experience) + " | " +status
+		content += "\n"
 	}
 
 	err = GitLabManager.M_CreateEditWikiPage(git, project.ID, content)
@@ -37,4 +61,40 @@ func M_SaveAsWikiPage(gitLabURL string, projectName string, accessToken string, 
 	}
 
 	return nil
+}
+
+func m_GenerateProgressBar(percentProgress int, maxSteps int) (string) {
+	x := percentProgress*maxSteps/100
+	rest := maxSteps-x
+
+	var str string
+	str += "["
+	for i := 1; i <= x; i += 1 {
+		str += "#"
+	}
+	for i := 1; i <= rest; i += 1 {
+		str += "."
+	}
+	str += "]"
+	return str
+}
+
+func m_GetPlayerLevel(levels []Models.Level, currentExp int) (playerLevel int, nextLevelExp int ,currentLevelPercentComplete int) {
+	if(len(levels)<= 0) {
+		return 1, currentExp,100
+	}
+
+
+	var lastLevelReq int
+	for _, level := range levels {
+		if currentExp >= level.RequiredEXP {
+			playerLevel += 1
+		} else {
+			lastLevelReq = level.RequiredEXP
+			break
+		}
+	}
+	currentLevelPercentComplete = 100*currentExp/lastLevelReq
+
+	return playerLevel, lastLevelReq, currentLevelPercentComplete
 }

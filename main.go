@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/0x-1/GitGame/Services/GitLabService"
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 )
 
@@ -45,6 +46,8 @@ func main() {
 	//log.SetOutput(os.Stdout)
 	gin.SetMode(gin.DebugMode)
 	engine := gin.Default()
+
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	engine.GET("/ping", func(context *gin.Context) {
 		context.JSON(http.StatusOK, "pong")

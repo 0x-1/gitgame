@@ -15,51 +15,51 @@ func M_GetGitLabData(gitLabURL string, projectName string, accessToken string) (
 
 	//User
 	user, _, err := git.Users.CurrentUser()
-	if(err != nil) {
+	if err != nil {
 		return Models.GitLabData{}, err
 	}
 
 	//Project
 	project, err := M_GetProjectByName(git, projectName)
-	if(err != nil) {
+	if err != nil {
 		return Models.GitLabData{}, err
 	}
 	log.Println("UserID of AccessToken is: ", user.ID, "and ProjectID is: ", project.ID)
 
 	//Contributors
-	contributors, err := m_GetProjectContributors(git, project.ID)
-	if(err != nil) {
+	/*contributors, err := m_GetProjectContributors(git, project.ID)
+	if err != nil {
 		return Models.GitLabData{}, err
-	}
+	}*/
 
 	//Issues
-	issues, err := m_GetProjectIssues(git, project.ID)
-	if(err != nil) {
+	/*issues, err := m_GetProjectIssues(git, project.ID)
+	if err != nil {
 		return Models.GitLabData{}, err
-	}
+	}*/
 
 	//Project Members
 	members, err := m_GetProjectMembers(git, project.ID)
-	if(err != nil) {
+	if err != nil {
 		return Models.GitLabData{}, err
 	}
 
 	//Events
 	events, err := m_GetProjectEvents(git, project.ID)
-	if(err != nil) {
+	if err != nil {
 		return Models.GitLabData{}, err
 	}
 
 	//Config File
 	configFileContent, err := m_GetFileContent(git, project.ID, project.DefaultBranch)
-	if(err != nil) {
+	if err != nil {
 		return Models.GitLabData{}, err
 	}
 
 	var gitLabData Models.GitLabData
-	gitLabData.Contributors = contributors
+	//gitLabData.Contributors = contributors
 	gitLabData.Project = project
-	gitLabData.Issues = issues
+	//gitLabData.Issues = issues
 	gitLabData.Events = events
 	gitLabData.Members = members
 	gitLabData.ConfigFileContent = configFileContent
