@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/0x-1/GitGame/Models"
 	"gopkg.in/alecthomas/kingpin.v2"
-	"log"
+	"strconv"
 	"strings"
 )
 
@@ -53,10 +53,30 @@ func M_Interpret(gitLabData Models.GitLabData) (Models.GitGameState, error) {
 	return state, nil
 }
 
-func m_InterpretFile() (error) {
+func M_TestInterpret(configFileContent string) (error) {
+	//Split by line
+	lines := strings.Split(configFileContent, "\n")
 
-	for {
-		break
+	//Line by Line
+	for index, line := range lines {
+		err := M_TestInterpretLine(line)
+		if err != nil {
+			return errors.New("Parsing Error in line "+strconv.Itoa(index)+": "+err.Error())
+		}
+	}
+	return nil
+}
+
+func M_TestInterpretLine(cmd string) (error){
+	//Comments
+	cmdNoComment := strings.Split(cmd, "//")
+	if (len(cmdNoComment[0]) <= 0) {
+		return nil
+	}
+	//Parsing Error
+	_, err := app.Parse(strings.Fields(cmdNoComment[0]))
+	if (err != nil) {
+		return err
 	}
 	return nil
 }

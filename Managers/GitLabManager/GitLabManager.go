@@ -2,29 +2,63 @@ package GitLabManager
 
 import (
 	"encoding/base64"
+	"github.com/0x-1/GitGame/Managers/InterpreterManager"
 	"github.com/0x-1/GitGame/Models"
 	"github.com/pkg/errors"
 	"github.com/xanzy/go-gitlab"
-	"log"
 	"strings"
 )
 
-func M_GetGitLabData(gitLabURL string, projectName string, accessToken string) (Models.GitLabData, error) {
+func M_TestGitLabData(gitLabURL string, projectName string, nameSpace, accessToken string)(error) {
+	git := gitlab.NewClient(nil, accessToken)
+	git.SetBaseURL(gitLabURL)
+
+	//Test Token
+	_, _, err := git.Users.CurrentUser()
+	if err != nil {
+		return errors.New("permission error, please check token")
+	}
+
+	project, err := M_GetProjectByName(git, projectName, nameSpace)
+	if err != nil{
+		return errors.New("could not find project: "+projectName+" in namespace: "+nameSpace)
+	}
+	if(len(project.DefaultBranch)<=0) {
+		return errors.New("there is no default branch")
+	}
+
+	configFileContent, err := m_GetFileContent(git, project.ID, project.DefaultBranch)
+	if err != nil {
+		return errors.New("there is no .gitgame file in the default branch or no permission")
+	}
+
+	err = InterpreterManager.M_TestInterpret(configFileContent)
+	if(err != nil) {
+		return err
+	}
+
+	return nil
+}
+
+func M_GetGitLabData(gitLabURL string, projectName string, nameSpace, accessToken string) (Models.GitLabData, error) {
 	git := gitlab.NewClient(nil, accessToken)
 	git.SetBaseURL(gitLabURL)
 
 	//User
-	user, _, err := git.Users.CurrentUser()
+	/*user, _, err := git.Users.CurrentUser()
 	if err != nil {
+		return Models.GitLabData{}, err
+	}*/
+
+	//Project
+	project, err := M_GetProjectByName(git, projectName, nameSpace)
+	if err != nil{
 		return Models.GitLabData{}, err
 	}
 
-	//Project
-	project, err := M_GetProjectByName(git, projectName)
-	if err != nil {
-		return Models.GitLabData{}, err
+	if(len(project.DefaultBranch)<=0) {
+		return Models.GitLabData{}, errors.New("there is no default branch")
 	}
-	log.Println("UserID of AccessToken is: ", user.ID, "and ProjectID is: ", project.ID)
 
 	//Contributors
 	/*contributors, err := m_GetProjectContributors(git, project.ID)
@@ -68,7 +102,7 @@ func M_GetGitLabData(gitLabURL string, projectName string, accessToken string) (
 }
 
 
-func M_GetProjectByName(git *gitlab.Client ,projectName string)(gitlab.Project, error) {
+func M_GetProjectByName(git *gitlab.Client ,projectName string, nameSpace string)(gitlab.Project, error) {
 	opt := gitlab.ListProjectsOptions{
 
 		Membership:gitlab.Bool(true),
@@ -96,7 +130,7 @@ func M_GetProjectByName(git *gitlab.Client ,projectName string)(gitlab.Project, 
 	}
 
 	for _, element := range allProjects {
-		if(strings.EqualFold(element.Name, projectName)) {
+		if(strings.EqualFold(element.Namespace.Name, nameSpace) && strings.EqualFold(element.Name, projectName)) {
 			return *element, nil
 		}
 	}

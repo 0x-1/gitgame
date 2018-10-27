@@ -10,11 +10,11 @@ import (
 	"time"
 )
 
-func M_SaveAsWikiPage(gitLabURL string, projectName string, accessToken string, state Models.GitGameState, gitGameHost string, gitLabHost string)(error) {
+func M_SaveAsWikiPage(gitLabURL string, projectName string, nameSpace string, accessToken string, state Models.GitGameState, gitGameHost string)(error) {
 	git := gitlab.NewClient(nil, accessToken)
 	git.SetBaseURL(gitLabURL)
 
-	project, err := GitLabManager.M_GetProjectByName(git,projectName)
+	project, err := GitLabManager.M_GetProjectByName(git,projectName, nameSpace)
 
 	var content string
 
@@ -26,7 +26,7 @@ func M_SaveAsWikiPage(gitLabURL string, projectName string, accessToken string, 
 
 
 
-	content += "#Update this file by opening this link once: [link]("+gitGameHost+"/gitgame/update/"+projectName+"/"+cryptedToken+"?url="+gitLabHost+")\n\n"
+	content += "#Update this file by opening this link once: [link]("+gitGameHost+"/gitgame/"+nameSpace+"/"+projectName+"?ctoken="+cryptedToken+"&url="+gitLabURL+")\n\n"
 	content += "Spieler | Level | Fortschritt | Erfahrung\n"
 	content += "--- | --- | --- | ---\n"
 

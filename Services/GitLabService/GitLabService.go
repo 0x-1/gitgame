@@ -14,9 +14,8 @@ import (
 func M_InitGitLabService(engine *gin.Engine) {
 	//engine.POST("/requestGame", m_OnRequestGame)
 
-	engine.GET("/gitgame/start/:projectName/:accessToken", m_OnStartGame)
-	engine.GET("/gitgame/update/:projectName/:cryptedToken", m_OnUpdateGame)
-	engine.GET("/gitgame/test", m_OnTest)
+	engine.GET("/gitgame/:namespace/:project", m_OnStartGame)
+	engine.GET("/test", m_OnTest)
 }
 
 func m_OnTest(context *gin.Context) {
@@ -39,84 +38,57 @@ func m_OnTest(context *gin.Context) {
 //TODO RETURN OK AFTER SANITY CHECK ONLY (token ok?, project name ok?) and do the rest in a go routine!
 
 func m_OnStartGame(context *gin.Context) {
+	namespace := context.Param("namespace")
+	projectName := context.Param("project")
 
 	gitLabURL := context.DefaultQuery("url", "https://gitlab.com")
-	projectName := context.Param("projectName")
-	accessToken := context.Param("accessToken")
+	accessToken := context.Query("token")
+	cryptedToken := context.Query("ctoken")
 
-	if(len(projectName) <= 0 || len(accessToken) <= 0) {
+	if(len(projectName) <= 0 || len(namespace) <= 0 || (len(accessToken) <= 0 && len(cryptedToken)<= 0)) {
 		context.AbortWithStatus(http.StatusBadRequest)
-	}
-
-
-
-	/*gitLabData, err := GitLabManager.M_GetGitLabData(gitLabURL, projectName, accessToken)
-	if(err != nil) {
-		context.AbortWithStatus(http.StatusBadRequest)
-	}*/ //todo test
-
-
-
-	go func() {
-		gitLabData , err := GitLabManager.M_GetGitLabData(gitLabURL, projectName, accessToken)
-		if(err != nil) {
-			log.Println(err)
-		}
-
-		gitGameState, err := InterpreterManager.M_Interpret(gitLabData)
-		if(err != nil){
-			log.Println(err)
-		}
-
-		err = OutputManager.M_SaveAsWikiPage(gitLabURL, projectName, accessToken, gitGameState, context.Request.Host, gitLabURL)
-		if(err != nil) {
-			log.Println(err)
-		}
-	}()
-
-	context.JSON(http.StatusOK, "Game, Started. Please wait at least 10 seconds and look into your wiki for #gitGame Result")
-}
-
-func m_OnUpdateGame(context *gin.Context) {
-	gitLabURL := context.DefaultQuery("url", "https://gitlab.com")
-	projectName := context.Param("projectName")
-	cryptedToken := context.Param("cryptedToken")
-
-	if(len(projectName) <= 0 || len(cryptedToken) <= 0) {
-		context.AbortWithStatus(http.StatusBadRequest)
-	}
-	bytes, err := base64.URLEncoding.DecodeString(cryptedToken)
-	if(err != nil) {
-		context.AbortWithStatus(http.StatusBadRequest)
-		log.Println(err)
 		return
 	}
 
-	decbytes, err := CryptManager.M_Decrypt(bytes)
-	if(err != nil) {
-		context.AbortWithStatus(http.StatusBadRequest)
-		log.Println(err)
-		return
+	if len(cryptedToken) > 0 {
+		bytes, err := base64.URLEncoding.DecodeString(cryptedToken)
+		if(err != nil) {
+			context.AbortWithStatus(http.StatusBadRequest)
+			log.Println(err)
+			return
+		}
+
+		decbytes, err := CryptManager.M_Decrypt(bytes)
+		if(err != nil) {
+			context.AbortWithStatus(http.StatusBadRequest)
+			log.Println(err)
+			return
+		}
+
+		accessToken =  string(decbytes)
 	}
 
-	accessToken :=  string(decbytes)
+	err := GitLabManager.M_TestGitLabData(gitLabURL, projectName, namespace, accessToken)
+	if(err != nil) {
+		context.JSON(http.StatusInternalServerError, "GitGame Error: " + err.Error())
+	} else {
+		go func() {
+			gitLabData , err := GitLabManager.M_GetGitLabData(gitLabURL, projectName, namespace, accessToken)
+			if(err != nil) {
+				log.Println(err)
+			}
 
-	go func() {
-		gitLabData , err := GitLabManager.M_GetGitLabData(gitLabURL, projectName, accessToken)
-		if(err != nil) {
-			log.Println(err)
-		}
+			gitGameState, err := InterpreterManager.M_Interpret(gitLabData)
+			if(err != nil){
+				log.Println(err)
+			}
 
-		gitGameState, err := InterpreterManager.M_Interpret(gitLabData)
-		if(err != nil){
-			log.Println(err)
-		}
+			err = OutputManager.M_SaveAsWikiPage(gitLabURL, projectName, namespace, accessToken, gitGameState, context.Request.Host)
+			if(err != nil) {
+				log.Println(err)
+			}
+		}()
+		context.JSON(http.StatusOK, "Game, Started. Please wait at least 10 seconds and look into your wiki for #gitGame Result")
+	}
 
-		err = OutputManager.M_SaveAsWikiPage(gitLabURL, projectName, accessToken, gitGameState, context.Request.Host, gitLabURL)
-		if(err != nil) {
-			log.Println(err)
-		}
-	}()
-
-	context.JSON(http.StatusOK, "yeeeeeey")
 }
