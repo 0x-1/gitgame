@@ -23,7 +23,37 @@ var (
 	questaddconstraint = questadd.Arg("constraint", "action like close|open|closeassigned|commentassigned|...").Required().String()
 )
 
-func M_Interpret(currentState Models.GitGameState, gitData Models.GitLabData,cmd string) (Models.GitGameState, error) {
+func M_Interpret(gitLabData Models.GitLabData)(Models.GitGameState, error) {
+
+	//Split by line
+	lines := strings.Split(gitLabData.ConfigFileContent,"\n")
+
+	//Create GameState
+	var state Models.GitGameState
+	for _, member := range gitLabData.Members {
+		state.Players = append(state.Players, Models.Player{MemberData:member})
+	}
+
+	//Line by Line
+	for _, line := range lines {
+		state, err := m_InterpretLine(state, Models.GitLabData{}, line)
+		if(err != nil) {
+			return state, err
+		}
+	}
+
+	return state, nil
+}
+
+func m_InterpretFile()(error){
+
+	for {
+		break
+	}
+	return nil
+}
+
+func m_InterpretLine(currentState Models.GitGameState, gitData Models.GitLabData,cmd string) (Models.GitGameState, error) {
 
 	//Comments
 	cmdNoComment := strings.Split(cmd, "//")

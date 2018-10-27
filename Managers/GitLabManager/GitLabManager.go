@@ -2,11 +2,72 @@ package GitLabManager
 
 import (
 	"encoding/base64"
+	"github.com/0x-1/GitGame/Models"
 	"github.com/pkg/errors"
 	"github.com/xanzy/go-gitlab"
 	"log"
 	"strings"
 )
+
+func M_GetGitLabData(gitLabURL string, projectName string, accessToken string) (Models.GitLabData, error) {
+	git := gitlab.NewClient(nil, accessToken)
+	git.SetBaseURL(gitLabURL)
+
+	//User
+	user, _, err := git.Users.CurrentUser()
+	if(err != nil) {
+		return Models.GitLabData{}, err
+	}
+
+	//Project
+	project, err := M_GetProjectByName(git, projectName)
+	if(err != nil) {
+		return Models.GitLabData{}, err
+	}
+	log.Println("UserID of AccessToken is: ", user.ID, "and ProjectID is: ", project.ID)
+
+	//Contributors
+	contributors, err := m_GetProjectContributors(git, project.ID)
+	if(err != nil) {
+		return Models.GitLabData{}, err
+	}
+
+	//Issues
+	issues, err := m_GetProjectIssues(git, project.ID)
+	if(err != nil) {
+		return Models.GitLabData{}, err
+	}
+
+	//Project Members
+	members, err := m_GetProjectMembers(git, project.ID)
+	if(err != nil) {
+		return Models.GitLabData{}, err
+	}
+
+	//Events
+	events, err := m_GetProjectEvents(git, project.ID)
+	if(err != nil) {
+		return Models.GitLabData{}, err
+	}
+
+	//Config File
+	configFileContent, err := m_GetFileContent(git, project.ID, project.DefaultBranch)
+	if(err != nil) {
+		return Models.GitLabData{}, err
+	}
+
+	var gitLabData Models.GitLabData
+	gitLabData.Contributors = contributors
+	gitLabData.Project = project
+	gitLabData.Issues = issues
+	gitLabData.Events = events
+	gitLabData.Members = members
+	gitLabData.ConfigFileContent = configFileContent
+	return gitLabData, nil
+
+}
+
+
 func M_GetProjectByName(git *gitlab.Client ,projectName string)(gitlab.Project, error) {
 	opt := gitlab.ListProjectsOptions{
 
@@ -43,7 +104,7 @@ func M_GetProjectByName(git *gitlab.Client ,projectName string)(gitlab.Project, 
 }
 
 //viable, can filter userid
-func M_GetProjectIssues(git *gitlab.Client ,projectID int)([]gitlab.Issue, error) {
+func m_GetProjectIssues(git *gitlab.Client ,projectID int)([]gitlab.Issue, error) {
 
 
 
@@ -74,7 +135,7 @@ func M_GetProjectIssues(git *gitlab.Client ,projectID int)([]gitlab.Issue, error
 	return allIssues, nil
 }
 
-func M_GetProjectContributors(git *gitlab.Client, projectID int)([]gitlab.Contributor, error) {
+func m_GetProjectContributors(git *gitlab.Client, projectID int)([]gitlab.Contributor, error) {
 
 	opt := &gitlab.ListContributorsOptions{
 		PerPage:10,
@@ -102,7 +163,7 @@ func M_GetProjectContributors(git *gitlab.Client, projectID int)([]gitlab.Contri
 	return allContributors, nil
 }
 
-func M_GetProjectCommits(git *gitlab.Client, projectID int)([]gitlab.Commit, error) {
+func m_GetProjectCommits(git *gitlab.Client, projectID int)([]gitlab.Commit, error) {
 
 	opt := &gitlab.ListCommitsOptions{
 		ListOptions: gitlab.ListOptions{
@@ -132,7 +193,7 @@ func M_GetProjectCommits(git *gitlab.Client, projectID int)([]gitlab.Commit, err
 }
 
 //not usefull, only one user possible
-func M_GetProjectEvents(git *gitlab.Client, projectID int) ([]gitlab.ContributionEvent, error) {
+func m_GetProjectEvents(git *gitlab.Client, projectID int) ([]gitlab.ContributionEvent, error) {
 
 	opt := &gitlab.ListContributionEventsOptions{
 		ListOptions: gitlab.ListOptions{
@@ -161,7 +222,7 @@ func M_GetProjectEvents(git *gitlab.Client, projectID int) ([]gitlab.Contributio
 	return allEvents, nil
 }
 
-func M_GetProjectMembers(git *gitlab.Client, projectID int)([]gitlab.ProjectMember, error) {
+func m_GetProjectMembers(git *gitlab.Client, projectID int)([]gitlab.ProjectMember, error) {
 	opt := &gitlab.ListProjectMembersOptions{
 
 	}
@@ -180,37 +241,36 @@ func M_GetProjectMembers(git *gitlab.Client, projectID int)([]gitlab.ProjectMemb
 
 }
 
-func M_GetFile(git *gitlab.Client, projectID int, branch string)(content string, err error) {
+func m_GetFileContent(git *gitlab.Client, projectID int, branch string)(string, error) {
 	opt := &gitlab.GetFileOptions{
 		Ref: gitlab.String(branch),
 	}
 
-	file, _, err := git.RepositoryFiles.GetFile(projectID, ".gitattributes", opt)
+	file, _, err := git.RepositoryFiles.GetFile(projectID, ".gitgame", opt)
 	if(err==nil) {
+		//Readable Bytes
 		bytes, err := base64.StdEncoding.DecodeString(file.Content)
-		if(err==nil) {
-			temp := strings.Split(string(bytes),"\n")
-			for _, element := range temp {
-				log.Println(element) //todo
-			}
-		} else {
+		if(err != nil) {
 			return "", err
 		}
-		return file.Content, nil
+		return string(bytes), nil
 	} else {
 		return "", err
 	}
 }
 
-func M_CreateEditWikiPage(git *gitlab.Client, projectID int) (error){
+func M_CreateEditWikiPage(git *gitlab.Client, projectID int, content string) (error){
+
 	optEdit := &gitlab.EditWikiPageOptions{
-		Content:gitlab.String("yey 2"),
+		Content:gitlab.String(content),
 		Title:gitlab.String("#gitGame-Result"),
 	}
 
+
+
 	optCreate := &gitlab.CreateWikiPageOptions{
 		Title:gitlab.String("#gitGame-Result"),
-		Content:gitlab.String("yey"),
+		Content:gitlab.String(content),
 	}
 
 	//optList := &gitlab.ListWikisOptions{

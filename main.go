@@ -1,11 +1,8 @@
 package main
 
 import (
-	"github.com/0x-1/GitGame/Managers/GitLabManager"
 	"github.com/0x-1/GitGame/Services/GitLabService"
 	"github.com/gin-gonic/gin"
-	"github.com/xanzy/go-gitlab"
-	"log"
 	"net/http"
 )
 
@@ -54,30 +51,30 @@ func main() {
 	})
 
 	//Add Services
-	GitLabService.M_InitGameService(engine)
+	GitLabService.M_InitGitLabService(engine)
 
 	engine.Run(":54321")
 	//test
 
 
-	git := gitlab.NewClient(nil, "S8WXCdS2yrJwhSZ_C-oH")
+	/*git := gitlab.NewClient(nil, "S8WXCdS2yrJwhSZ_C-oH")
 	git.SetBaseURL("https://inf-git.fh-rosenheim.de/")
-	project, err := GitLabManager.M_GetProjectByName(git,"unity")
+	project, err := GitLabManager.m_GetProjectByName(git,"unity")
 	if(err==nil) {
 		log.Println("Project: ", project.ID)
 
-		_, err := GitLabManager.M_GetFile(git, project.ID, project.DefaultBranch)
+		_, err := GitLabManager.m_GetFile(git, project.ID, project.DefaultBranch)
 		if(err != nil) {
 			log.Println(err)
 		}
 
-		issues, err := GitLabManager.M_GetProjectIssues(git, project.ID)
+		issues, err := GitLabManager.m_GetProjectIssues(git, project.ID)
 		if(err == nil) {
 			log.Println("Issues:", len(issues))
-			contributors, err := GitLabManager.M_GetProjectContributors(git, project.ID)
+			contributors, err := GitLabManager.m_GetProjectContributors(git, project.ID)
 			if(err==nil) {
 				log.Println("Contributors:", len(contributors))
-				events, err := GitLabManager.M_GetProjectEvents(git, project.ID)
+				events, err := GitLabManager.m_GetProjectEvents(git, project.ID)
 				if(err==nil) {
 					for _, event := range events {
 						//log.Println(event.CreatedAt, event.AuthorUsername,event.ActionName,event.TargetType, event.TargetTitle)
@@ -102,7 +99,7 @@ func main() {
 		}
 	} else {
 		log.Println(err)
-	}
+	}*/
 
 	//engine.Run(":54321")
 }
