@@ -88,6 +88,7 @@ func m_GetPlayerLevel(levels []Models.Level, currentExp int) (playerLevel int, n
 	var lastLevelReq int
 	for _, level := range levels {
 		if currentExp >= level.RequiredEXP {
+			lastLevelReq = level.RequiredEXP
 			playerLevel += 1
 		} else {
 			lastLevelReq = level.RequiredEXP
