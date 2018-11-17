@@ -6,6 +6,7 @@ import (
 	"github.com/0x-1/GitGame/Managers/GitLabManager"
 	"github.com/0x-1/GitGame/Models"
 	"github.com/xanzy/go-gitlab"
+	"math"
 	"strconv"
 	"time"
 )
@@ -27,7 +28,7 @@ func M_SaveAsWikiPage(gitLabURL string, projectName string, nameSpace string, ac
 
 
 	content += "#Update this file by opening this link once: [link]("+gitGameHost+"/gitgame/"+nameSpace+"/"+projectName+"?ctoken="+cryptedToken+"&url="+gitLabURL+")\n\n"
-	content += "Spieler | Level | Fortschritt | Erfahrung\n"
+	content += "Spieler | Level | Fortschritt im Level | Erfahrung\n"
 	content += "--- | --- | --- | ---\n"
 
 	for _,player := range state.Players {
@@ -73,7 +74,7 @@ func m_GenerateProgressBar(percentProgress int, maxSteps int) (string) {
 		str += "#"
 	}
 	for i := 1; i <= rest; i += 1 {
-		str += "."
+		str += ".."
 	}
 	str += "]"
 	return str
@@ -96,6 +97,10 @@ func m_GetPlayerLevel(levels []Models.Level, currentExp int) (playerLevel int, n
 		}
 	}
 	currentLevelPercentComplete = 100*currentExp/lastLevelReq
+	if(currentLevelPercentComplete > 100) {
+		currentLevelPercentComplete = 100
+	}
+
 
 	return playerLevel, lastLevelReq, currentLevelPercentComplete
 }
