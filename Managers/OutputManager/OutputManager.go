@@ -6,7 +6,6 @@ import (
 	"github.com/0x-1/GitGame/Managers/GitLabManager"
 	"github.com/0x-1/GitGame/Models"
 	"github.com/xanzy/go-gitlab"
-	"math"
 	"strconv"
 	"time"
 )
