@@ -27,7 +27,7 @@ func M_SaveAsWikiPage(gitLabURL string, projectName string, nameSpace string, ac
 
 
 	content += "#Update this file by opening this link once: [link]("+gitGameHost+"/gitgame/"+nameSpace+"/"+projectName+"?ctoken="+cryptedToken+"&url="+gitLabURL+")\n\n"
-	content += "Spieler | Level | Fortschritt im Level | Punkte\n"
+	content += "Spieler | Level(Max="+strconv.Itoa(len(state.Levels))+") | Fortschritt im Level | Punkte\n"
 	content += "--- | --- | --- | ---\n"
 
 	for _,player := range state.Players {
