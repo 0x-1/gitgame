@@ -104,7 +104,7 @@ func m_InterpretLine(currentState Models.GitGameState, gitData Models.GitLabData
 	return currentState, nil
 }
 
-func m_InterpretQuestAdd(currentState Models.GitGameState, gitData Models.GitLabData, cmd string)(Models.GitGameState, error){
+func m_InterpretQuestAdd(currentState Models.GitGameState, gitData Models.GitLabData, cmd string) (Models.GitGameState, error) {
 	var newState Models.GitGameState
 	newState = currentState
 	var todo Models.Todo
@@ -112,83 +112,106 @@ func m_InterpretQuestAdd(currentState Models.GitGameState, gitData Models.GitLab
 	case "issue":
 		{
 
-				if len(*questConstraint)>= 0 {
-					switch *questConstraint {
-					case "opened":
-						{
-							if(*questScope == "player") {
-								todo.Description = "Player Open Issue"
-								todo.Experience = *questExp
-								todo.Done = false
-								for _, event := range gitData.Events {
-									if (event.TargetType != "Issue") {
-										continue
-									}
-									if (event.ActionName != "opened") {
-										continue
-									}
+			if len(*questConstraint) >= 0 {
+				switch *questConstraint {
+				case "opened":
+					{
+						if (*questScope == "player") {
+							todo.Description = "Player Open Issue"
+							todo.Experience = *questExp
+							todo.Done = false
+							for _, event := range gitData.Events {
+								if (event.TargetType != "Issue") {
+									continue
+								}
+								if (event.ActionName != "opened") {
+									continue
+								}
 
-									for pindex, player := range newState.Players {
-										if (event.AuthorID == player.MemberData.ID) {
-											newState.Players[pindex].Experience += *questExp
-										}
+								for pindex, player := range newState.Players {
+									if (event.AuthorID == player.MemberData.ID) {
+										newState.Players[pindex].Experience += *questExp
 									}
 								}
-								newState.Todos = append(newState.Todos, todo)
-								return newState, nil
-							} else {
-								return newState, errors.New("unknown scope in: " + cmd)
 							}
-
+							newState.Todos = append(newState.Todos, todo)
+							return newState, nil
+						} else {
+							return newState, errors.New("unknown scope in: " + cmd)
 						}
-					case "closed":
-						{
-							if(*questScope == "player") {
-								todo.Description = "Player Close Issue"
-								todo.Experience = *questExp
-								todo.Done = false
-								for _, event := range gitData.Events {
-									if (event.TargetType != "Issue") {
-										continue
-									}
-									if (event.ActionName != "closed") {
-										continue
-									}
-									for pindex, player := range newState.Players {
-										if (event.AuthorID == player.MemberData.ID) {
-											newState.Players[pindex].Experience += *questExp
-										}
+
+					}
+				case "closed":
+					{
+						if (*questScope == "player") {
+							todo.Description = "Player Close Issue"
+							todo.Experience = *questExp
+							todo.Done = false
+							for _, event := range gitData.Events {
+								if (event.TargetType != "Issue") {
+									continue
+								}
+								if (event.ActionName != "closed") {
+									continue
+								}
+								for pindex, player := range newState.Players {
+									if (event.AuthorID == player.MemberData.ID) {
+										newState.Players[pindex].Experience += *questExp
 									}
 								}
-								newState.Todos = append(newState.Todos, todo)
-								return newState, nil
-							} else {
-								return newState, errors.New("unknown scope in: " + cmd)
 							}
-						}
-					default:
-						{
-							return newState, errors.New("unknown issue constaint in: " + cmd)
-						}
-					}
-				} else {
-					return newState, errors.New("issue required to have a constaint in: " + cmd)
-				}
-		}
-	/*case "commit":
-		{
-			for _, event := range gitData.Events {
-				if (event.ActionName == "pushed to") {
-					for pindex, player := range currentState.Players {
-						if (event.AuthorID == player.MemberData.ID) {
-							currentState.Players[pindex].Experience += *questExp
+							newState.Todos = append(newState.Todos, todo)
+							return newState, nil
+						} else {
+							return newState, errors.New("unknown scope in: " + cmd)
 						}
 					}
+				default:
+					{
+						return newState, errors.New("unknown issue constaint in: " + cmd)
+					}
 				}
+			} else {
+				return newState, errors.New("issue required to have a constaint in: " + cmd)
 			}
-			return currentState, nil
-		}*/
+		}
+	case "commit":
+		{
+			if len(*questConstraint) >= 0 {
+				switch *questConstraint {
+				case "created":
+					{
+						if (*questScope == "player") {
+							todo.Description = "Player Create Commit"
+							todo.Experience = *questExp
+							todo.Done = false
+							for _, event := range gitData.Events {
+								if (event.ActionName != "pushed to") {
+									continue
+								}
 
+								for pindex, player := range newState.Players {
+									if (event.AuthorID == player.MemberData.ID) {
+										newState.Players[pindex].Experience += *questExp
+									}
+								}
+							}
+							newState.Todos = append(newState.Todos, todo)
+							return newState, nil
+						} else {
+							return newState, errors.New("unknown scope in: " + cmd)
+						}
+
+					}
+				default:
+					{
+						return newState, errors.New("unknown commit constaint in: " + cmd)
+					}
+				}
+			} else {
+				return newState, errors.New("commit required to have a constaint in: " + cmd)
+			}
+		}
 	default:
 		return currentState, errors.New("unknown quest type in: " + cmd)
 	}
