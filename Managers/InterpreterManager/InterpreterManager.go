@@ -20,7 +20,7 @@ var (
 	questScope          = questCmd.Arg("scope", "player").Required().String()
 	questType       = questCmd.Arg("type", "issue|commit").Required().String()
 	questExp        = questCmd.Arg("exp", "exp reward").Required().Int()
-	questConstraint = questCmd.Arg("constraint", "issue:closed|opened commit:created").String()
+	questConstraint = questCmd.Arg("constraint", "issue:closed|opened commit:created|wiki").String()
 
 	archievementCmd = app.Command("archievement", "archievement element")
 	archievementScope = archievementCmd.Arg("scope", "project").Required().String()
@@ -120,7 +120,7 @@ func m_InterpretQuestAdd(currentState Models.GitGameState, gitData Models.GitLab
 							todo.Description = "Player Open Issue"
 							todo.Experience = *questExp
 							todo.Done = false
-							for _, event := range gitData.Events {
+							for _, event := range gitData.ProjectEvents {
 								if (event.TargetType != "Issue") {
 									continue
 								}
@@ -147,7 +147,7 @@ func m_InterpretQuestAdd(currentState Models.GitGameState, gitData Models.GitLab
 							todo.Description = "Player Close Issue"
 							todo.Experience = *questExp
 							todo.Done = false
-							for _, event := range gitData.Events {
+							for _, event := range gitData.ProjectEvents {
 								if (event.TargetType != "Issue") {
 									continue
 								}
@@ -185,7 +185,7 @@ func m_InterpretQuestAdd(currentState Models.GitGameState, gitData Models.GitLab
 							todo.Description = "Player Create Commit"
 							todo.Experience = *questExp
 							todo.Done = false
-							for _, event := range gitData.Events {
+							for _, event := range gitData.ProjectEvents {
 								if (event.ActionName != "pushed to") {
 									continue
 								}
@@ -203,6 +203,29 @@ func m_InterpretQuestAdd(currentState Models.GitGameState, gitData Models.GitLab
 						}
 
 					}
+				case "wiki":
+					{
+						if (*questScope == "player") {
+							todo.Description = "Player Create Wiki Commit"
+							todo.Experience = *questExp
+							todo.Done = false
+							for _, event := range gitData.WikiEvents {
+								if (event.ActionName != "pushed to") {
+									continue
+								}
+
+								for pindex, player := range newState.Players {
+									if (event.AuthorID == player.MemberData.ID) {
+										newState.Players[pindex].Experience += *questExp
+									}
+								}
+							}
+							newState.Todos = append(newState.Todos, todo)
+							return newState, nil
+						} else {
+							return newState, errors.New("unknown scope in: " + cmd)
+						}
+				}
 				default:
 					{
 						return newState, errors.New("unknown commit constaint in: " + cmd)
@@ -233,7 +256,7 @@ func m_InterpretArchievementAdd(currentState Models.GitGameState, gitData Models
 							todo.Experience = *archievementExp
 							todo.Done = false
 
-							for _, event := range gitData.Events {
+							for _, event := range gitData.ProjectEvents {
 								if (event.TargetType != "Milestone") {
 									continue
 								}

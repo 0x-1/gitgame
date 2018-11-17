@@ -79,8 +79,20 @@ func M_GetGitLabData(gitLabURL string, projectName string, nameSpace, accessToke
 	}
 
 	//Events
-	events, err := m_GetProjectEvents(git, project.ID)
+	projectEvents, err := m_GetProjectEvents(git, project.ID)
 	if err != nil {
+		return Models.GitLabData{}, err
+	}
+
+	//Wiki Repo
+	wiki, err := M_GetProjectByName(git, projectName+".wiki", nameSpace)
+	if err != nil{
+		return Models.GitLabData{}, err
+	}
+
+	//WikiEvents
+	wikiEvents, err := m_GetProjectWikiEvents(git, wiki.ID)
+	if(err != nil) {
 		return Models.GitLabData{}, err
 	}
 
@@ -100,7 +112,8 @@ func M_GetGitLabData(gitLabURL string, projectName string, nameSpace, accessToke
 	//gitLabData.Contributors = contributors
 	gitLabData.Project = project
 	//gitLabData.Issues = issues
-	gitLabData.Events = events
+	gitLabData.ProjectEvents = projectEvents
+	gitLabData.WikiEvents = wikiEvents
 	gitLabData.Members = members
 	gitLabData.ConfigFileContent = configFileContent
 	gitLabData.PipelineList = pipelineList
@@ -233,8 +246,37 @@ func m_GetProjectCommits(git *gitlab.Client, projectID int)([]gitlab.Commit, err
 	return allCommits, nil
 }
 
-//not usefull, only one user possible
 func m_GetProjectEvents(git *gitlab.Client, projectID int) ([]gitlab.ContributionEvent, error) {
+
+	opt := &gitlab.ListContributionEventsOptions{
+		ListOptions: gitlab.ListOptions{
+			PerPage: 10,
+			Page:    1,
+		},
+	}
+
+	var allEvents []gitlab.ContributionEvent
+	for {
+		events, resp, err := git.Events.ListProjectVisibleEvents(projectID, opt)
+		if (err == nil) {
+			for _, element := range events {
+				allEvents = append(allEvents, *element)
+			}
+			if opt.Page >= resp.TotalPages {
+				break
+			}
+
+			opt.Page = resp.NextPage
+		} else {
+			return nil, err
+		}
+
+	}
+	return allEvents, nil
+}
+
+func m_GetProjectWikiEvents(git *gitlab.Client, projectID int) ([]gitlab.ContributionEvent, error) {
+
 
 	opt := &gitlab.ListContributionEventsOptions{
 		ListOptions: gitlab.ListOptions{

@@ -6,7 +6,8 @@ type GitLabData struct {
 	//Contributors []gitlab.Contributor
 	ConfigFileContent string
 	//Issues []gitlab.Issue
-	Events []gitlab.ContributionEvent
+	ProjectEvents []gitlab.ContributionEvent
+	WikiEvents []gitlab.ContributionEvent
 	PipelineList gitlab.PipelineList
 	Project gitlab.Project
 	Members []gitlab.ProjectMember
