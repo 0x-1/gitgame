@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/xanzy/go-gitlab"
 	"strings"
+	"log"
 )
 
 func M_TestGitLabData(gitLabURL string, projectName string, nameSpace, accessToken string)(error) {
@@ -34,6 +35,7 @@ func M_TestGitLabData(gitLabURL string, projectName string, nameSpace, accessTok
 
 	err = InterpreterManager.M_TestInterpret(configFileContent)
 	if(err != nil) {
+		log.Println("err")
 		return err
 	}
 
@@ -84,18 +86,6 @@ func M_GetGitLabData(gitLabURL string, projectName string, nameSpace, accessToke
 		return Models.GitLabData{}, err
 	}
 
-	//Wiki Repo
-	wiki, err := M_GetProjectByName(git, projectName+".wiki", nameSpace)
-	if err != nil{
-		return Models.GitLabData{}, err
-	}
-
-	//WikiEvents
-	wikiEvents, err := m_GetProjectWikiEvents(git, wiki.ID)
-	if(err != nil) {
-		return Models.GitLabData{}, err
-	}
-
 	//Config File
 	configFileContent, err := m_GetFileContent(git, project.ID, project.DefaultBranch)
 	if err != nil {
@@ -113,7 +103,6 @@ func M_GetGitLabData(gitLabURL string, projectName string, nameSpace, accessToke
 	gitLabData.Project = project
 	//gitLabData.Issues = issues
 	gitLabData.ProjectEvents = projectEvents
-	gitLabData.WikiEvents = wikiEvents
 	gitLabData.Members = members
 	gitLabData.ConfigFileContent = configFileContent
 	gitLabData.PipelineList = pipelineList
@@ -132,7 +121,6 @@ func M_GetProjectByName(git *gitlab.Client ,projectName string, nameSpace string
 			Page:    1,
 		},
 	}
-
 	var allProjects []*gitlab.Project
 	for {
 		projects, resp, err := git.Projects.ListProjects(&opt)

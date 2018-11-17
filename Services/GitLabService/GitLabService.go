@@ -71,6 +71,7 @@ func m_OnStartGame(context *gin.Context) {
 	err := GitLabManager.M_TestGitLabData(gitLabURL, projectName, namespace, accessToken)
 	if(err != nil) {
 		context.JSON(http.StatusInternalServerError, "GitGame Error: " + err.Error())
+		return
 	} else {
 		go func() {
 			gitLabData , err := GitLabManager.M_GetGitLabData(gitLabURL, projectName, namespace, accessToken)

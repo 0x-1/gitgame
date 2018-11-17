@@ -20,7 +20,7 @@ var (
 	questScope          = questCmd.Arg("scope", "player").Required().String()
 	questType       = questCmd.Arg("type", "issue|commit").Required().String()
 	questExp        = questCmd.Arg("exp", "exp reward").Required().Int()
-	questConstraint = questCmd.Arg("constraint", "issue:closed|opened commit:created|wiki").String()
+	questConstraint = questCmd.Arg("constraint", "issue:closed|opened commit:created").String()
 
 	archievementCmd = app.Command("archievement", "archievement element")
 	archievementScope = archievementCmd.Arg("scope", "project").Required().String()
@@ -51,6 +51,67 @@ func M_Interpret(gitLabData Models.GitLabData) (Models.GitGameState, error) {
 	}
 
 	return state, nil
+}
+
+func M_TestInterpret(configFileContent string) (error) {
+	//Split by line
+	lines := strings.Split(configFileContent, "\n")
+
+
+	//Line by Line
+	for index, line := range lines {
+		err := M_TestInterpretLine(line)
+		if err != nil {
+			return errors.New("Parsing Error in line "+strconv.Itoa(index)+": "+err.Error())
+		}
+	}
+	return nil
+}
+
+func M_TestInterpretLine(cmd string) (error){
+	//Comments
+	cmdNoComment := strings.Split(cmd, "//")
+	if (len(cmdNoComment[0]) <= 0) {
+		return nil
+	}
+	//Parsing Error
+	parsed, err := app.Parse(strings.Fields(cmdNoComment[0]))
+	if (err != nil) {
+		return err
+	}
+
+	//Parsing OK, Switch Commands
+	parsedString := kingpin.MustParse(parsed, err)
+	switch parsedString {
+
+	//Level Add Command
+	case level.FullCommand():
+		{
+
+		}
+
+		//Quest Add Command
+	case questCmd.FullCommand():
+		{
+			_, err := m_InterpretQuestAdd(Models.GitGameState{}, Models.GitLabData{}, cmd)
+			if(err != nil) {
+				return err
+			}
+		}
+	case archievementCmd.FullCommand():
+		{
+			_, err := m_InterpretArchievementAdd(Models.GitGameState{}, Models.GitLabData{}, cmd)
+			if(err != nil) {
+				return err
+			}
+		}
+	default:
+		{
+			return errors.New("unknown command in: "+cmd)
+		}
+	}
+
+	return nil
 }
 
 func m_InterpretLine(currentState Models.GitGameState, gitData Models.GitLabData, cmd string) (Models.GitGameState, error) {
@@ -203,29 +264,6 @@ func m_InterpretQuestAdd(currentState Models.GitGameState, gitData Models.GitLab
 						}
 
 					}
-				case "wiki":
-					{
-						if (*questScope == "player") {
-							todo.Description = "Player Create Wiki Commit"
-							todo.Experience = *questExp
-							todo.Done = false
-							for _, event := range gitData.WikiEvents {
-								if (event.ActionName != "pushed to") {
-									continue
-								}
-
-								for pindex, player := range newState.Players {
-									if (event.AuthorID == player.MemberData.ID) {
-										newState.Players[pindex].Experience += *questExp
-									}
-								}
-							}
-							newState.Todos = append(newState.Todos, todo)
-							return newState, nil
-						} else {
-							return newState, errors.New("unknown scope in: " + cmd)
-						}
-				}
 				default:
 					{
 						return newState, errors.New("unknown commit constaint in: " + cmd)
@@ -326,34 +364,6 @@ func m_InterpretArchievementAdd(currentState Models.GitGameState, gitData Models
 			return newState, errors.New("unknown archievement type in: " + cmd)
 		}
 	}
-}
-
-func M_TestInterpret(configFileContent string) (error) {
-	//Split by line
-	lines := strings.Split(configFileContent, "\n")
-
-	//Line by Line
-	for index, line := range lines {
-		err := M_TestInterpretLine(line)
-		if err != nil {
-			return errors.New("Parsing Error in line "+strconv.Itoa(index)+": "+err.Error())
-		}
-	}
-	return nil
-}
-
-func M_TestInterpretLine(cmd string) (error){
-	//Comments
-	cmdNoComment := strings.Split(cmd, "//")
-	if (len(cmdNoComment[0]) <= 0) {
-		return nil
-	}
-	//Parsing Error
-	_, err := app.Parse(strings.Fields(cmdNoComment[0]))
-	if (err != nil) {
-		return err
-	}
-	return nil
 }
 
 /*case "milestone":
