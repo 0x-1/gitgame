@@ -24,9 +24,9 @@ var (
 
 	archievementCmd = app.Command("archievement", "archievement element")
 	archievementScope = archievementCmd.Arg("scope", "project").Required().String()
-	archievementType = archievementCmd.Arg("type", "milestone").Required().String()
+	archievementType = archievementCmd.Arg("type", "milestone|pipeline").Required().String()
 	archievementExp = archievementCmd.Arg("exp", "exp reward").Required().Int()
-	archievementConstraint = archievementCmd.Arg("constraint", "milestone:opened").String()
+	archievementConstraint = archievementCmd.Arg("constraint", "milestone:opened | pipleline:created").String()
 )
 
 func M_Interpret(gitLabData Models.GitLabData) (Models.GitGameState, error) {
@@ -51,34 +51,6 @@ func M_Interpret(gitLabData Models.GitLabData) (Models.GitGameState, error) {
 	}
 
 	return state, nil
-}
-
-func M_TestInterpret(configFileContent string) (error) {
-	//Split by line
-	lines := strings.Split(configFileContent, "\n")
-
-	//Line by Line
-	for index, line := range lines {
-		err := M_TestInterpretLine(line)
-		if err != nil {
-			return errors.New("Parsing Error in line "+strconv.Itoa(index)+": "+err.Error())
-		}
-	}
-	return nil
-}
-
-func M_TestInterpretLine(cmd string) (error){
-	//Comments
-	cmdNoComment := strings.Split(cmd, "//")
-	if (len(cmdNoComment[0]) <= 0) {
-		return nil
-	}
-	//Parsing Error
-	_, err := app.Parse(strings.Fields(cmdNoComment[0]))
-	if (err != nil) {
-		return err
-	}
-	return nil
 }
 
 func m_InterpretLine(currentState Models.GitGameState, gitData Models.GitLabData, cmd string) (Models.GitGameState, error) {
@@ -269,11 +241,73 @@ func m_InterpretArchievementAdd(currentState Models.GitGameState, gitData Models
 
 			return newState, nil
 		}
+	case "pipeline":
+		{
+			if len(*archievementConstraint) >= 0 {
+				switch *archievementConstraint {
+				case "created":
+					{
+						if (*archievementScope == "project") {
+							todo.Description = "Create Pipeline for Project."
+							todo.Experience = *archievementExp
+							todo.Done = false
+
+							if(len(gitData.PipelineList) >=0) {
+								for pindex, _ := range newState.Players {
+									newState.Players[pindex].Experience += *archievementExp
+								}
+
+								todo.Done = true
+							}
+							newState.Todos = append(newState.Todos, todo)
+							return newState, nil
+						} else {
+							return newState, errors.New("unknown scope in: " + cmd)
+						}
+
+					}
+				default:
+					{
+						return newState, errors.New("unknown pipeline constaint in: " + cmd)
+					}
+				}
+			} else {
+				return newState, errors.New("pipeline required to have a constaint in: " + cmd)
+			}
+		}
 	default:
 		{
 			return newState, errors.New("unknown archievement type in: " + cmd)
 		}
 	}
+}
+
+func M_TestInterpret(configFileContent string) (error) {
+	//Split by line
+	lines := strings.Split(configFileContent, "\n")
+
+	//Line by Line
+	for index, line := range lines {
+		err := M_TestInterpretLine(line)
+		if err != nil {
+			return errors.New("Parsing Error in line "+strconv.Itoa(index)+": "+err.Error())
+		}
+	}
+	return nil
+}
+
+func M_TestInterpretLine(cmd string) (error){
+	//Comments
+	cmdNoComment := strings.Split(cmd, "//")
+	if (len(cmdNoComment[0]) <= 0) {
+		return nil
+	}
+	//Parsing Error
+	_, err := app.Parse(strings.Fields(cmdNoComment[0]))
+	if (err != nil) {
+		return err
+	}
+	return nil
 }
 
 /*case "milestone":

@@ -90,6 +90,12 @@ func M_GetGitLabData(gitLabURL string, projectName string, nameSpace, accessToke
 		return Models.GitLabData{}, err
 	}
 
+	//PipelineList
+	pipelineList, err := m_GetPipelineList(git, project.ID)
+	if(err != nil) {
+		return Models.GitLabData{}, err
+	}
+
 	var gitLabData Models.GitLabData
 	//gitLabData.Contributors = contributors
 	gitLabData.Project = project
@@ -97,6 +103,7 @@ func M_GetGitLabData(gitLabURL string, projectName string, nameSpace, accessToke
 	gitLabData.Events = events
 	gitLabData.Members = members
 	gitLabData.ConfigFileContent = configFileContent
+	gitLabData.PipelineList = pipelineList
 	return gitLabData, nil
 
 }
@@ -291,6 +298,19 @@ func m_GetFileContent(git *gitlab.Client, projectID int, branch string)(string, 
 	} else {
 		return "", err
 	}
+}
+
+func m_GetPipelineList(git *gitlab.Client, projectID int)(gitlab.PipelineList, error) {
+	opt := &gitlab.ListProjectPipelinesOptions{
+
+	}
+
+	list, _, err := git.Pipelines.ListProjectPipelines(projectID, opt)
+	if(err != nil) {
+		return nil, err
+	}
+
+	return list, nil
 }
 
 func M_CreateEditWikiPage(git *gitlab.Client, projectID int, content string) (error){

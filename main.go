@@ -56,7 +56,7 @@ func main() {
 	//Add Services
 	GitLabService.M_InitGitLabService(engine)
 
-	engine.Run(":54321")
+	engine.Run(":80")
 	//test
 
 
