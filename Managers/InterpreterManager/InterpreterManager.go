@@ -18,9 +18,9 @@ var (
 
 	questCmd       = app.Command("quest", "quest element")
 	questScope          = questCmd.Arg("scope", "player").Required().String()
-	questType       = questCmd.Arg("type", "issue").Required().String()
+	questType       = questCmd.Arg("type", "issue|commit").Required().String()
 	questExp        = questCmd.Arg("exp", "exp reward").Required().Int()
-	questConstraint = questCmd.Arg("constraint", "closed|opened").String()
+	questConstraint = questCmd.Arg("constraint", "issue:closed|opened commit:created").String()
 
 	archievementCmd = app.Command("archievement", "archievement element")
 	archievementScope = archievementCmd.Arg("scope", "project").Required().String()
