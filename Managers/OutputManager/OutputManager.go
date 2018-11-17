@@ -27,7 +27,7 @@ func M_SaveAsWikiPage(gitLabURL string, projectName string, nameSpace string, ac
 
 
 	content += "#Update this file by opening this link once: [link]("+gitGameHost+"/gitgame/"+nameSpace+"/"+projectName+"?ctoken="+cryptedToken+"&url="+gitLabURL+")\n\n"
-	content += "Spieler | Level | Fortschritt im Level | Erfahrung\n"
+	content += "Spieler | Level | Fortschritt im Level | Punkte\n"
 	content += "--- | --- | --- | ---\n"
 
 	for _,player := range state.Players {
@@ -41,7 +41,7 @@ func M_SaveAsWikiPage(gitLabURL string, projectName string, nameSpace string, ac
 
 	content += "\n\n"
 	content += "TODO:\n\n"
-	content += "Beschreibung | Erfahrung | Status\n"
+	content += "Beschreibung | Punkte | Status\n"
 	content += "--- | --- | ---\n"
 
 	for _, todo := range state.Todos {
