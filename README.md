@@ -19,7 +19,7 @@ To install Gin package, you need to install Go and set your Go workspace first.
 
 2. Run
 
-`go run github.com/0x-1/gitgame/main.go`
+`go run %gopath%\src\github.com\0x-1\gitgame\main.go`
 
 ## Configuration
 1. Create .gitgame File in Repository
