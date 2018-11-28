@@ -1,5 +1,5 @@
 # GitGame
-GitGame is a web service written in Go (GoLang). It's a work-in-progess gamification Solution that features a simplistic but extendable way to gamify your repository.
+GitGame is a web service written in Go (GoLang). It's a work-in-progess project that features a simplistic but extendable way to gamify your gitlab repository
 
 `.gitgame file + http call = wiki page`
 
