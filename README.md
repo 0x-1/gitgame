@@ -33,15 +33,17 @@ Currently supported game rules:
 Quests are repeatable and rewards **[points]**  
 Currently supports either _issue or commit_  
 issue currently supports _opened_ as **[constraint]**  
-commit currently supports _created_ as **[constraint]**
+commit currently supports _created_ as **[constraint]**  
+**[scope]** is either player or project
 
 * achievement **[scope]** milestone|pipeline **[points]** **[constraint]**  
 Achievements reward **[points]** only once and can't be repeated  
 Currently supports either _milestone or pipeline_  
 milestone currently supports _opened_ as **[constraint]**  
-pipeline currently supports _created_ as **[constraint]**
+pipeline currently supports _created_ as **[constraint]**  
+**[scope]** is either player or project
 
-* level [required points]  
+* level **[required points]**  
 This creates a new level for all players with [required points] as the absolut boundary
 
 Example .gitgame Configuration File:
